@@ -36,12 +36,12 @@
 <!-- ═══ TOP METRICS (Company-first) ═══ -->
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
   <div class="card p-4 text-center">
-    <p class="metric-label text-slate-400">SG Employer Cost</p>
+    <p class="metric-label text-slate-400">Pokee Cost (SG)</p>
     <p class="text-2xl font-bold text-slate-700 mt-1" id="metricSGCost">—</p>
     <p class="text-xs text-slate-400">SGD / year</p>
   </div>
   <div class="card p-4 text-center">
-    <p class="metric-label text-slate-400">TH Employer Cost</p>
+    <p class="metric-label text-slate-400">Pokee Cost (TH)</p>
     <p class="text-2xl font-bold text-blue-600 mt-1" id="metricTHCost">—</p>
     <p class="text-xs text-slate-400">SGD / year</p>
   </div>
@@ -80,8 +80,8 @@
 
   <!-- LEFT: Employer cost chart (larger) -->
   <div class="card p-5 lg:col-span-3">
-    <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-1">Employer Cost Comparison</h3>
-    <p class="text-xs text-slate-400 mb-4">Annual total cost to company (SGD)</p>
+    <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-1">Pokee Cost Comparison</h3>
+    <p class="text-xs text-slate-400 mb-4">Annual total cost to Pokee (SGD)</p>
     <div style="height:260px">
       <canvas id="costChart"></canvas>
     </div>
@@ -127,7 +127,7 @@
       </div>
     </div>
     <div class="mt-4 bg-blue-50 rounded-xl px-4 py-3 text-center">
-      <p class="metric-label text-blue-400">Company saves</p>
+      <p class="metric-label text-blue-400">Pokee saves</p>
       <p class="text-xl font-bold text-blue-700" id="cbSave">—</p>
       <p class="text-xs text-blue-400" id="cbSaveMo">—</p>
     </div>
@@ -403,10 +403,10 @@ function calc() {
   if (diff < 0) {
     insightBox.className = 'mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3';
     insightEl.innerHTML = `<span class="text-amber-700">At <strong>${fmt(thInvM)} SGD/mo</strong>, the contractor takes home <strong>${fmt(absDiff)} SGD/yr less</strong> than under Singapore employment (after rent). `
-      + `The breakeven invoice is <strong>${fmt(beInvM)} SGD/mo</strong> — at that level, the company would still save <strong>${fmt(Math.round(beSavings))} SGD/yr (${beSavPct.toFixed(0)}%)</strong> vs Singapore.</span>`;
+      + `The breakeven invoice is <strong>${fmt(beInvM)} SGD/mo</strong> — at that level, Pokee would still save <strong>${fmt(Math.round(beSavings))} SGD/yr (${beSavPct.toFixed(0)}%)</strong> vs Singapore.</span>`;
   } else {
     insightBox.className = 'mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3';
-    insightEl.innerHTML = `<span class="text-emerald-700">At <strong>${fmt(thInvM)} SGD/mo</strong>, the contractor's take-home matches or exceeds their Singapore position, while the company saves <strong>${fmt(Math.round(savings))} SGD/yr (${savPct.toFixed(0)}%)</strong>.</span>`;
+    insightEl.innerHTML = `<span class="text-emerald-700">At <strong>${fmt(thInvM)} SGD/mo</strong>, the contractor's take-home matches or exceeds their Singapore position, while Pokee saves <strong>${fmt(Math.round(savings))} SGD/yr (${savPct.toFixed(0)}%)</strong>.</span>`;
   }
 
   // ─── SG table ───
@@ -424,13 +424,13 @@ function calc() {
   const d = thDetails;
   if (currentModel === 'B1') {
     $('thTable').innerHTML =
-      tRow('Company revenue', Math.round(thInvY), thInvM)
+      tRow('Pokee invoice revenue', Math.round(thInvY), thInvM)
       + tRow('Salary (' + fmt(d.salM) + ' THB/mo)', Math.round(d.salY/fx), Math.round(d.salM*12/fx/12))
       + tRow('Personal income tax', -Math.round(d.thTax/fx), '', 'text-red-500')
       + tRow('Employee SS', -Math.round(d.thSSy/fx), '', 'text-slate-400')
       + tRow('Net salary', Math.round(d.salNet/fx), '', 'text-emerald-600')
       + '<tr><td colspan="3" class="py-1"><hr class="border-slate-100"></td></tr>'
-      + tRow('Company profit', Math.round(d.profit/fx), '', 'text-slate-400')
+      + tRow('Retained profit', Math.round(d.profit/fx), '', 'text-slate-400')
       + tRow('CIT (SME)', -Math.round(d.cit/fx), '', 'text-red-500 text-xs')
       + tRow('Dividend WHT 10%', -Math.round(d.divWHT/fx), '', 'text-red-500 text-xs')
       + tRow('Net dividend', Math.round(d.divNet/fx), '', 'text-emerald-600')
@@ -438,13 +438,13 @@ function calc() {
       + tRow('Total usable cash', Math.round(thNetSGD), Math.round(thNetSGD/12), 'text-emerald-700 font-bold');
   } else {
     $('thTable').innerHTML =
-      tRow('Company revenue', Math.round(thInvY), thInvM)
+      tRow('Pokee invoice revenue', Math.round(thInvY), thInvM)
       + tRow('Salary (50,000 THB/mo)', Math.round(d.salY/fx), Math.round(d.salY/fx/12))
       + tRow('Personal income tax', -Math.round(d.thTax/fx), '', 'text-red-500')
       + tRow('Employee SS', -Math.round(d.thSSy/fx), '', 'text-slate-400')
       + tRow('Net salary', Math.round(d.salNet/fx), '', 'text-emerald-600')
       + '<tr><td colspan="3" class="py-1"><hr class="border-slate-100"></td></tr>'
-      + tRow('Company profit before CIT', Math.round(d.profit/fx), '', 'text-slate-500')
+      + tRow('Profit before CIT', Math.round(d.profit/fx), '', 'text-slate-500')
       + tRow('CIT (SME: 0% first 300k, 15% next)', -Math.round(d.cit/fx), '', 'text-red-500')
       + tRow('Profit after CIT', Math.round(d.profitAT/fx), '', 'text-slate-500')
       + tRow('Dividend WHT 10% (final)', -Math.round(d.divWHT/fx), '', 'text-red-500')
@@ -471,7 +471,7 @@ function initCharts() {
   };
   costChart = new Chart($('costChart'), {
     type: 'bar',
-    data: { labels: ['Singapore Employment', 'Thailand Invoicing', 'Savings'], datasets: [{ data: [0,0,0], backgroundColor: ['#94a3b8','#3b82f6','#bfdbfe'], borderRadius: 8, barPercentage: 0.55, maxBarThickness: 80 }] },
+    data: { labels: ['Pokee: SG Employment', 'Pokee: TH Invoicing', 'Pokee Savings'], datasets: [{ data: [0,0,0], backgroundColor: ['#94a3b8','#3b82f6','#bfdbfe'], borderRadius: 8, barPercentage: 0.55, maxBarThickness: 80 }] },
     options: barOpts
   });
   netChart = new Chart($('netChart'), {
