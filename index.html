@@ -195,7 +195,8 @@
     </div>
     <!-- TH side -->
     <div class="border border-blue-100 rounded-xl p-4 bg-blue-50/30">
-      <p class="text-xs font-semibold text-blue-400 uppercase mb-3" id="thPanelTitle">Thailand — Salary-Heavy (B1)</p>
+      <p class="text-xs font-semibold text-blue-400 uppercase mb-1" id="thPanelTitle">Thailand — Salary-Heavy (B1)</p>
+      <p class="text-xs text-blue-300 mb-3" id="thPlanDesc">Maximize personal salary — nearly all company revenue is paid out as salary, leaving minimal profit. Small remaining profit (if any) is distributed as dividends after CIT.</p>
       <table class="w-full text-sm"><tbody id="thTable"></tbody></table>
     </div>
   </div>
@@ -379,6 +380,9 @@ function setModel(m) {
   document.getElementById('tabB1').className = 'pb-1 cursor-pointer transition ' + (m==='B1'?'tab-active':'tab-inactive');
   document.getElementById('tabB2').className = 'pb-1 cursor-pointer transition ' + (m==='B2'?'tab-active':'tab-inactive');
   document.getElementById('thPanelTitle').textContent = m==='B1' ? 'Thailand — Salary-Heavy (B1)' : 'Thailand — Salary + Dividend (B2)';
+  document.getElementById('thPlanDesc').textContent = m==='B1'
+    ? 'Maximize personal salary — nearly all company revenue is paid out as salary, leaving minimal profit. Small remaining profit (if any) is distributed as dividends after CIT.'
+    : 'Moderate fixed salary (50,000 THB/mo) with the remaining company profit distributed as dividends. CIT applies to profit (SME rates), then 10% withholding tax on dividends (final tax).';
   calc();
 }
 
