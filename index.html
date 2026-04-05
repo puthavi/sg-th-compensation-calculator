@@ -501,10 +501,11 @@ function calc() {
   // ─── SG table ───
   let sgTaxRows = '';
   for (const b of sgBreakdown.rows) {
-    sgTaxRows += tRowSub(b.label, (b.rate*100).toFixed(1)+'%', b.tax);
+    sgTaxRows += tRowSub(b.label + ' SGD', (b.rate*100).toFixed(1)+'%', b.tax, 'SGD');
   }
   $('sgTable').innerHTML =
-    tRow('Gross salary', sgSalY, sgSalM)
+    tColHeader([{text:''},{text:'Annual (SGD)',align:'text-right'},{text:'Monthly (SGD)',align:'text-right'}])
+    + tRow('Gross salary', sgSalY, sgSalM)
     + tRow('Earned Income Relief', -sgEIR, '', 'text-slate-400')
     + tRow('Chargeable income', sgChargeable, '', 'font-medium')
     + tSectionLabel('Tax calculation (progressive)')
@@ -512,7 +513,7 @@ function calc() {
     + tRow('Gross tax', sgGrossTax, '', 'text-red-400')
     + tRow('YA 2026 rebate (60%, max 200)', -sgRebate, '', 'text-emerald-500 text-xs')
     + tRow('Net income tax', -sgTax, -Math.round(sgTax/12), 'text-red-500 font-medium')
-    + '<tr><td colspan="3" class="py-1"><hr class="border-slate-100"></td></tr>'
+    + '<tr><td colspan="4" class="py-1"><hr class="border-slate-100"></td></tr>'
     + tRow('Net after tax', sgNetTax, Math.round(sgNetTax/12), 'text-emerald-600')
     + tRow('Rent', -sgRentY, -sgRentM, 'text-slate-400')
     + tRow('Usable cash', sgNetRent, Math.round(sgNetRent/12), 'text-emerald-700 font-bold');
@@ -521,7 +522,7 @@ function calc() {
   const d = thDetails;
   let thTaxRows = '';
   for (const b of thSalBreakdown.rows) {
-    thTaxRows += tRowSub(b.label + ' THB', (b.rate*100)+'%', Math.round(b.tax));
+    thTaxRows += tRowSub(b.label + ' THB', (b.rate*100)+'%', Math.round(b.tax), 'THB');
   }
 
   // Common salary section (both B1 and B2)
@@ -541,7 +542,7 @@ function calc() {
 
   // Company P&L section (both B1 and B2)
   const companySection =
-    '<tr><td colspan="3" class="py-1"><hr class="border-slate-100"></td></tr>'
+    '<tr><td colspan="4" class="py-1"><hr class="border-slate-100"></td></tr>'
     + tSectionLabel('Company P&L')
     + tRow('Company revenue', Math.round(thInvY), '', '', fmt(Math.round(thInvY_THB)) + ' THB')
     + tRow('Less: Salary expense', -Math.round(d.salY/fx), '', 'text-slate-400')
@@ -554,11 +555,12 @@ function calc() {
     + tRow('Net dividend', Math.round(d.divNet/fx), '', 'text-emerald-600', fmt(Math.round(d.divNet)) + ' THB');
 
   const totalSection =
-    '<tr><td colspan="3" class="py-1"><hr class="border-slate-100"></td></tr>'
+    '<tr><td colspan="4" class="py-1"><hr class="border-slate-100"></td></tr>'
     + tRow('Total usable cash', Math.round(thNetSGD), Math.round(thNetSGD/12), 'text-emerald-700 font-bold');
 
   $('thTable').innerHTML =
-    tRow('Pokee invoice revenue', Math.round(thInvY), thInvM)
+    tColHeader([{text:''},{text:'SGD',align:'text-right'},{text:'Monthly (SGD)',align:'text-right'},{text:'THB',align:'text-right'}])
+    + tRow('Pokee invoice revenue', Math.round(thInvY), thInvM)
     + salarySection
     + companySection
     + totalSection;
@@ -610,15 +612,18 @@ function tRow(label, annual, monthly, cls='', thbNote='') {
     ${thbNote ? '<td class="py-0.5 text-right tabular-nums text-slate-300 text-xs pl-2">'+thbNote+'</td>' : ''}
   </tr>`;
 }
-function tRowSub(bandLabel, rate, tax) {
+function tRowSub(bandLabel, rate, tax, currency='') {
   return `<tr>
     <td class="py-0 pl-3 text-xs text-slate-400">${bandLabel} @ ${rate}</td>
-    <td class="py-0 text-right tabular-nums text-xs text-slate-400">${fmt(tax)}</td>
+    <td class="py-0 text-right tabular-nums text-xs text-slate-400">${fmt(tax)}${currency ? ' <span class="text-slate-300">' + currency + '</span>' : ''}</td>
     <td></td>
   </tr>`;
 }
 function tSectionLabel(text) {
-  return `<tr><td colspan="3" class="pt-2 pb-0.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">${text}</td></tr>`;
+  return `<tr><td colspan="4" class="pt-2 pb-0.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">${text}</td></tr>`;
+}
+function tColHeader(cols) {
+  return '<tr class="border-b border-slate-200">' + cols.map(c => `<td class="pb-1.5 text-[10px] font-semibold text-slate-300 uppercase tracking-wider ${c.align||''}">${c.text}</td>`).join('') + '</tr>';
 }
 
 // ═══════════════════════════════════════════════════
