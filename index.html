@@ -98,10 +98,6 @@
             <span class="font-medium text-slate-700" id="cbSGSal">—</span>
           </div>
           <div class="flex justify-between text-sm">
-            <span class="text-slate-500">SG: SDL</span>
-            <span class="font-medium text-slate-700" id="cbSGSDL">—</span>
-          </div>
-          <div class="flex justify-between text-sm">
             <span class="text-slate-500">SG: CPF</span>
             <span class="font-medium text-slate-400">0 (EP holder)</span>
           </div>
@@ -234,7 +230,7 @@
       </div>
     </div>
     <div class="mt-4 text-xs text-slate-400 space-y-1">
-      <p><strong>SG:</strong> Tax resident (≥183 days). EP holder — no CPF, no FWL. Earned Income Relief 1,000 SGD (under 55). SDL 0.25% of first $4,500.</p>
+      <p><strong>SG:</strong> Tax resident (≥183 days). EP holder — no CPF, no FWL. Earned Income Relief 1,000 SGD (under 55).</p>
       <p><strong>TH (B1):</strong> Salary-heavy — maximize salary, minimal company profit. SME CIT (0% on first 300k THB profit).</p>
       <p><strong>TH (B2):</strong> Balanced — moderate salary (50k THB/mo) + dividends from company profits. CIT 15% on 300k–3M THB. Dividend WHT 10% (final).</p>
       <p><strong>Deductions:</strong> Employment income deduction 100k THB (cap), personal allowance 60k THB, SS 10.5k THB/yr (875/mo, 2026 cap at 17,500 THB/mo wage ceiling). Single, no dependents.</p>
@@ -405,9 +401,7 @@ function calc() {
   const sgTax = Math.round((sgGrossTax - sgRebate) * 100) / 100;
   const sgNetTax = sgSalY - sgTax;
   const sgNetRent = sgNetTax - sgRentY;
-  const sgSDL = Math.min(Math.min(sgSalM, 4500) * 0.0025, 11.25) * 12;
-  const sgSDLfinal = sgSalM < 50 ? 0 : Math.max(sgSDL, 24);
-  const pokeeSG = sgSalY + sgSDLfinal;
+  const pokeeSG = sgSalY;
   const sgBreakdown = sgPITBreakdown(sgChargeable);
 
   const thInvY = thInvM * 12;
@@ -450,7 +444,6 @@ function calc() {
 
   // ─── Cost breakdown ───
   $('cbSGSal').textContent = fmt(sgSalY);
-  $('cbSGSDL').textContent = fmt(Math.round(sgSDLfinal));
   $('cbSGTotal').textContent = fmt(pokeeSG);
   $('cbTHInv').textContent = fmt(thInvY);
   $('cbTHTotal').textContent = fmt(thInvY);
