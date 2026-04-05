@@ -237,7 +237,9 @@
       <p><strong>SG:</strong> Tax resident (≥183 days). EP holder — no CPF, no FWL. Earned Income Relief 1,000 SGD (under 55). SDL 0.25% of first $4,500.</p>
       <p><strong>TH (B1):</strong> Salary-heavy — maximize salary, minimal company profit. SME CIT (0% on first 300k THB profit).</p>
       <p><strong>TH (B2):</strong> Balanced — moderate salary (50k THB/mo) + dividends from company profits. CIT 15% on 300k–3M THB. Dividend WHT 10% (final).</p>
-      <p><strong>Deductions:</strong> Employment income deduction 100k THB (cap), personal allowance 60k THB, SS 9k THB/yr. Single, no dependents.</p>
+      <p><strong>Deductions:</strong> Employment income deduction 100k THB (cap), personal allowance 60k THB, SS 10.5k THB/yr (875/mo, 2026 cap at 17,500 THB/mo wage ceiling). Single, no dependents.</p>
+      <p><strong>SG Tax Rebate:</strong> YA 2026 — 60% of tax payable, capped at SGD 200 (IRAS).</p>
+      <p><strong>TH Social Security:</strong> 5% employee + 5% employer, wage cap 17,500 THB/mo from Jan 2026 (Royal Gazette B.E. 2568 Phase 1).</p>
       <p><strong>Sources:</strong> <a href="https://taxsummaries.pwc.com/singapore/individual/taxes-on-personal-income" target="_blank" class="text-blue-400 underline">PwC SG</a>, <a href="https://taxsummaries.pwc.com/thailand/individual/taxes-on-personal-income" target="_blank" class="text-blue-400 underline">PwC TH (PIT)</a>, <a href="https://taxsummaries.pwc.com/thailand/corporate/taxes-on-corporate-income" target="_blank" class="text-blue-400 underline">PwC TH (CIT)</a>, <a href="https://www.iras.gov.sg" target="_blank" class="text-blue-400 underline">IRAS</a></p>
       <p class="text-amber-500">⚠ For modelling purposes only. Confirm all figures with a qualified accountant before making decisions.</p>
     </div>
@@ -252,35 +254,114 @@
 // ═══════════════════════════════════════════════════
 // TAX ENGINES
 // ═══════════════════════════════════════════════════
+
+// Singapore PIT — progressive brackets (YA 2024-2026, IRAS)
 function sgPIT(c) {
   const b=[[20000,0],[10000,.02],[10000,.035],[40000,.07],[40000,.115],[40000,.15],[40000,.18],[40000,.19],[40000,.195],[40000,.20],[180000,.22],[500000,.23],[1/0,.24]];
   let r=Math.max(c,0),t=0;for(const[w,x]of b){const a=Math.min(r,w);t+=a*x;r-=a;if(r<=0)break;}return Math.round(t*100)/100;
 }
+
+// Singapore PIT with band-by-band breakdown for display
+function sgPITBreakdown(c) {
+  const bands = [
+    {lo:0,hi:20000,rate:0,label:'0 – 20,000'},
+    {lo:20000,hi:30000,rate:.02,label:'20,001 – 30,000'},
+    {lo:30000,hi:40000,rate:.035,label:'30,001 – 40,000'},
+    {lo:40000,hi:80000,rate:.07,label:'40,001 – 80,000'},
+    {lo:80000,hi:120000,rate:.115,label:'80,001 – 120,000'},
+    {lo:120000,hi:160000,rate:.15,label:'120,001 – 160,000'},
+    {lo:160000,hi:200000,rate:.18,label:'160,001 – 200,000'},
+    {lo:200000,hi:240000,rate:.19,label:'200,001 – 240,000'},
+    {lo:240000,hi:280000,rate:.195,label:'240,001 – 280,000'},
+    {lo:280000,hi:320000,rate:.20,label:'280,001 – 320,000'},
+    {lo:320000,hi:500000,rate:.22,label:'320,001 – 500,000'},
+    {lo:500000,hi:1000000,rate:.23,label:'500,001 – 1,000,000'},
+    {lo:1000000,hi:Infinity,rate:.24,label:'Above 1,000,000'},
+  ];
+  const rows = [];
+  let total = 0;
+  for (const b of bands) {
+    if (c <= b.lo) break;
+    const taxable = Math.min(c, b.hi) - b.lo;
+    const tax = Math.round(taxable * b.rate * 100) / 100;
+    total += tax;
+    if (taxable > 0) rows.push({label: b.label, rate: b.rate, taxable, tax});
+  }
+  return {rows, total: Math.round(total * 100) / 100};
+}
+
+// Thailand PIT — progressive brackets (Revenue Department)
 function thPIT(c) {
   const b=[[150000,0],[150000,.05],[200000,.10],[250000,.15],[250000,.20],[1000000,.25],[3000000,.30],[1/0,.35]];
   let r=Math.max(c,0),t=0;for(const[w,x]of b){const a=Math.min(r,w);t+=a*x;r-=a;if(r<=0)break;}return Math.round(t*100)/100;
 }
+
+// Thailand PIT with band-by-band breakdown for display
+function thPITBreakdown(c) {
+  const bands = [
+    {lo:0,hi:150000,rate:0,label:'0 – 150,000'},
+    {lo:150000,hi:300000,rate:.05,label:'150,001 – 300,000'},
+    {lo:300000,hi:500000,rate:.10,label:'300,001 – 500,000'},
+    {lo:500000,hi:750000,rate:.15,label:'500,001 – 750,000'},
+    {lo:750000,hi:1000000,rate:.20,label:'750,001 – 1,000,000'},
+    {lo:1000000,hi:2000000,rate:.25,label:'1,000,001 – 2,000,000'},
+    {lo:2000000,hi:5000000,rate:.30,label:'2,000,001 – 5,000,000'},
+    {lo:5000000,hi:Infinity,rate:.35,label:'Above 5,000,000'},
+  ];
+  const rows = [];
+  let total = 0;
+  for (const b of bands) {
+    if (c <= b.lo) break;
+    const taxable = Math.min(c, b.hi) - b.lo;
+    const tax = Math.round(taxable * b.rate * 100) / 100;
+    total += tax;
+    if (taxable > 0) rows.push({label: b.label, rate: b.rate, taxable, tax});
+  }
+  return {rows, total: Math.round(total * 100) / 100};
+}
+
+// Thailand CIT — SME progressive rates (Revenue Department)
 function thCIT(p){if(p<=0)return 0;if(p<=300000)return 0;if(p<=3000000)return(p-300000)*.15;return 2700000*.15+(p-3000000)*.20;}
+
+// Social security constants (2026: Royal Gazette B.E. 2568, Phase 1)
+const TH_SS_RATE = 0.05;
+const TH_SS_WAGE_CAP_MONTHLY = 17500;  // THB/mo (raised from 15,000 in Jan 2026)
+const TH_SS_MAX_MONTHLY = TH_SS_WAGE_CAP_MONTHLY * TH_SS_RATE; // 875 THB/mo
+const TH_SS_MAX_YEARLY = TH_SS_MAX_MONTHLY * 12; // 10,500 THB/yr
+
+// Compute employee social security (annual)
+function thEmployeeSS(salaryMonthly) {
+  return Math.min(salaryMonthly * TH_SS_RATE, TH_SS_MAX_MONTHLY) * 12;
+}
+// Employer SS is the same rate and cap
+function thEmployerSS(salaryMonthly) {
+  return thEmployeeSS(salaryMonthly); // same calculation
+}
 
 // Compute TH net for a given monthly invoice (SGD), using current model + params
 function calcTHNet(invM, fx, thAdm, model) {
   const invY_THB = invM * 12 * fx;
-  const thSSy = 9000;
+  const erSS = TH_SS_MAX_YEARLY; // employer SS (company expense)
+  const eeSS = TH_SS_MAX_YEARLY; // employee SS (deducted from salary)
   let salY;
   if (model === 'B1') {
-    const maxSal = invY_THB - thAdm - thSSy;
+    // Max salary: revenue minus employer SS and admin (company expenses)
+    const maxSal = invY_THB - thAdm - erSS;
     salY = Math.floor(Math.max(maxSal, 0) / 12 / 1000) * 1000 * 12;
   } else {
     salY = 50000 * 12;
   }
-  const profit = invY_THB - salY - thSSy - thAdm;
+  // Company P&L: revenue - salary - employer SS - admin
+  const profit = invY_THB - salY - erSS - thAdm;
   const cit = thCIT(Math.max(profit, 0));
   const profitAT = Math.max(profit - cit, 0);
   const divNet = profitAT - profitAT * 0.10;
+  // Personal tax: salary minus deductions
   const empDed = Math.min(salY * 0.5, 100000);
-  const taxable = Math.max(salY - empDed - 60000 - thSSy, 0);
+  const taxable = Math.max(salY - empDed - 60000 - eeSS, 0);
   const thTax = thPIT(taxable);
-  const salNet = salY - thTax - thSSy;
+  // Net salary: salary minus PIT minus employee SS
+  const salNet = salY - thTax - eeSS;
   return (salNet + divNet) / fx;
 }
 
@@ -317,36 +398,44 @@ function calc() {
 
   const sgSalY = sgSalM * 12;
   const sgRentY = sgRentM * 12;
-  const sgChargeable = sgSalY - 1000;
-  const sgTax = sgPIT(sgChargeable);
+  const sgEIR = 1000; // Earned Income Relief (under 55)
+  const sgChargeable = sgSalY - sgEIR;
+  const sgGrossTax = sgPIT(sgChargeable);
+  const sgRebate = Math.min(sgGrossTax * 0.6, 200); // YA 2026: 60% capped at 200
+  const sgTax = Math.round((sgGrossTax - sgRebate) * 100) / 100;
   const sgNetTax = sgSalY - sgTax;
   const sgNetRent = sgNetTax - sgRentY;
   const sgSDL = Math.min(Math.min(sgSalM, 4500) * 0.0025, 11.25) * 12;
   const sgSDLfinal = sgSalM < 50 ? 0 : Math.max(sgSDL, 24);
   const pokeeSG = sgSalY + sgSDLfinal;
+  const sgBreakdown = sgPITBreakdown(sgChargeable);
 
   const thInvY = thInvM * 12;
   const thInvY_THB = thInvY * fx;
-  const thSSy = 9000;
+  const eeSS = TH_SS_MAX_YEARLY;  // employee social security
+  const erSS = TH_SS_MAX_YEARLY;  // employer social security (company expense)
 
   // TH calc (depends on model)
   let thNetSGD, thDetails;
   const salM_B = currentModel === 'B1'
-    ? Math.floor(Math.max(thInvY_THB - thAdm - thSSy, 0) / 12 / 1000) * 1000
+    ? Math.floor(Math.max(thInvY_THB - thAdm - erSS, 0) / 12 / 1000) * 1000
     : 50000;
   const salY = salM_B * 12;
-  const profit = thInvY_THB - salY - thSSy - thAdm;
+  // Company P&L: revenue - salary - employer SS - admin
+  const profit = thInvY_THB - salY - erSS - thAdm;
   const cit = thCIT(Math.max(profit, 0));
   const profitAT = Math.max(profit - cit, 0);
   const divWHT = profitAT * 0.10;
   const divNet = profitAT - divWHT;
+  // Personal tax on salary
   const empDed = Math.min(salY * 0.5, 100000);
-  const taxable = Math.max(salY - empDed - 60000 - thSSy, 0);
+  const taxable = Math.max(salY - empDed - 60000 - eeSS, 0);
   const thTax = thPIT(taxable);
-  const salNet = salY - thTax - thSSy;
+  const salNet = salY - thTax - eeSS;
   const totalNet = salNet + divNet;
   thNetSGD = totalNet / fx;
-  thDetails = {salM: salM_B, salY, empDed, taxable, thTax, thSSy: thSSy, salNet, profit, cit, profitAT, divWHT, divNet, totalNet};
+  const thSalBreakdown = thPITBreakdown(taxable);
+  thDetails = {salM: salM_B, salY, empDed, taxable, thTax, eeSS, erSS, salNet, profit, cit, profitAT, divWHT, divNet, totalNet};
 
   const savings = pokeeSG - thInvY;
   const savPct = pokeeSG > 0 ? (savings / pokeeSG * 100) : 0;
@@ -410,11 +499,19 @@ function calc() {
   }
 
   // ─── SG table ───
+  let sgTaxRows = '';
+  for (const b of sgBreakdown.rows) {
+    sgTaxRows += tRowSub(b.label, (b.rate*100).toFixed(1)+'%', b.tax);
+  }
   $('sgTable').innerHTML =
     tRow('Gross salary', sgSalY, sgSalM)
-    + tRow('Earned Income Relief', -1000, '', 'text-slate-400')
+    + tRow('Earned Income Relief', -sgEIR, '', 'text-slate-400')
     + tRow('Chargeable income', sgChargeable, '', 'font-medium')
-    + tRow('Income tax', -sgTax, -Math.round(sgTax/12), 'text-red-500')
+    + tSectionLabel('Tax calculation (progressive)')
+    + sgTaxRows
+    + tRow('Gross tax', sgGrossTax, '', 'text-red-400')
+    + tRow('YA 2026 rebate (60%, max 200)', -sgRebate, '', 'text-emerald-500 text-xs')
+    + tRow('Net income tax', -sgTax, -Math.round(sgTax/12), 'text-red-500 font-medium')
     + '<tr><td colspan="3" class="py-1"><hr class="border-slate-100"></td></tr>'
     + tRow('Net after tax', sgNetTax, Math.round(sgNetTax/12), 'text-emerald-600')
     + tRow('Rent', -sgRentY, -sgRentM, 'text-slate-400')
@@ -422,36 +519,49 @@ function calc() {
 
   // ─── TH table ───
   const d = thDetails;
-  if (currentModel === 'B1') {
-    $('thTable').innerHTML =
-      tRow('Pokee invoice revenue', Math.round(thInvY), thInvM)
-      + tRow('Salary (' + fmt(d.salM) + ' THB/mo)', Math.round(d.salY/fx), Math.round(d.salM*12/fx/12))
-      + tRow('Personal income tax', -Math.round(d.thTax/fx), '', 'text-red-500')
-      + tRow('Employee SS', -Math.round(d.thSSy/fx), '', 'text-slate-400')
-      + tRow('Net salary', Math.round(d.salNet/fx), '', 'text-emerald-600')
-      + '<tr><td colspan="3" class="py-1"><hr class="border-slate-100"></td></tr>'
-      + tRow('Retained profit', Math.round(d.profit/fx), '', 'text-slate-400')
-      + tRow('CIT (SME)', -Math.round(d.cit/fx), '', 'text-red-500 text-xs')
-      + tRow('Dividend WHT 10%', -Math.round(d.divWHT/fx), '', 'text-red-500 text-xs')
-      + tRow('Net dividend', Math.round(d.divNet/fx), '', 'text-emerald-600')
-      + '<tr><td colspan="3" class="py-1"><hr class="border-slate-100"></td></tr>'
-      + tRow('Total usable cash', Math.round(thNetSGD), Math.round(thNetSGD/12), 'text-emerald-700 font-bold');
-  } else {
-    $('thTable').innerHTML =
-      tRow('Pokee invoice revenue', Math.round(thInvY), thInvM)
-      + tRow('Salary (50,000 THB/mo)', Math.round(d.salY/fx), Math.round(d.salY/fx/12))
-      + tRow('Personal income tax', -Math.round(d.thTax/fx), '', 'text-red-500')
-      + tRow('Employee SS', -Math.round(d.thSSy/fx), '', 'text-slate-400')
-      + tRow('Net salary', Math.round(d.salNet/fx), '', 'text-emerald-600')
-      + '<tr><td colspan="3" class="py-1"><hr class="border-slate-100"></td></tr>'
-      + tRow('Profit before CIT', Math.round(d.profit/fx), '', 'text-slate-500')
-      + tRow('CIT (SME: 0% first 300k, 15% next)', -Math.round(d.cit/fx), '', 'text-red-500')
-      + tRow('Profit after CIT', Math.round(d.profitAT/fx), '', 'text-slate-500')
-      + tRow('Dividend WHT 10% (final)', -Math.round(d.divWHT/fx), '', 'text-red-500')
-      + tRow('Net dividend', Math.round(d.divNet/fx), '', 'text-emerald-600')
-      + '<tr><td colspan="3" class="py-1"><hr class="border-slate-100"></td></tr>'
-      + tRow('Total usable cash', Math.round(thNetSGD), Math.round(thNetSGD/12), 'text-emerald-700 font-bold');
+  let thTaxRows = '';
+  for (const b of thSalBreakdown.rows) {
+    thTaxRows += tRowSub(b.label + ' THB', (b.rate*100)+'%', Math.round(b.tax));
   }
+
+  // Common salary section (both B1 and B2)
+  const salarySection =
+    tSectionLabel('Your salary')
+    + tRow('Gross salary (' + fmt(d.salM) + ' THB/mo)', Math.round(d.salY/fx), Math.round(d.salM/fx*12/12), '', fmt(d.salY) + ' THB')
+    + tSectionLabel('Salary deductions (for PIT)')
+    + tRow('Employment deduction (50%, max 100k)', '', '', 'text-slate-400', fmt(d.empDed) + ' THB')
+    + tRow('Personal allowance', '', '', 'text-slate-400', '60,000 THB')
+    + tRow('Employee SS deduction', '', '', 'text-slate-400', fmt(d.eeSS) + ' THB')
+    + tRow('Taxable salary income', '', '', 'font-medium', fmt(Math.round(d.taxable)) + ' THB')
+    + tSectionLabel('PIT on salary (progressive)')
+    + thTaxRows
+    + tRow('Salary PIT', -Math.round(d.thTax/fx), '', 'text-red-500', fmt(Math.round(d.thTax)) + ' THB')
+    + tRow('Employee SS', -Math.round(d.eeSS/fx), '', 'text-slate-400', fmt(d.eeSS) + ' THB')
+    + tRow('Net salary', Math.round(d.salNet/fx), '', 'text-emerald-600', fmt(Math.round(d.salNet)) + ' THB');
+
+  // Company P&L section (both B1 and B2)
+  const companySection =
+    '<tr><td colspan="3" class="py-1"><hr class="border-slate-100"></td></tr>'
+    + tSectionLabel('Company P&L')
+    + tRow('Company revenue', Math.round(thInvY), '', '', fmt(Math.round(thInvY_THB)) + ' THB')
+    + tRow('Less: Salary expense', -Math.round(d.salY/fx), '', 'text-slate-400')
+    + tRow('Less: Employer SS', -Math.round(d.erSS/fx), '', 'text-slate-400', fmt(d.erSS) + ' THB')
+    + tRow('Less: Admin', -Math.round(thAdm/fx), '', 'text-slate-400', fmt(thAdm) + ' THB')
+    + tRow('Profit before CIT', Math.round(d.profit/fx), '', 'font-medium', fmt(Math.round(d.profit)) + ' THB')
+    + tRow('CIT (SME: 0% ≤300k, 15% to 3M)', -Math.round(d.cit/fx), '', 'text-red-500', fmt(Math.round(d.cit)) + ' THB')
+    + tRow('Profit after CIT', Math.round(d.profitAT/fx), '', '', fmt(Math.round(d.profitAT)) + ' THB')
+    + tRow('Dividend WHT 10% (final)', -Math.round(d.divWHT/fx), '', 'text-red-500', fmt(Math.round(d.divWHT)) + ' THB')
+    + tRow('Net dividend', Math.round(d.divNet/fx), '', 'text-emerald-600', fmt(Math.round(d.divNet)) + ' THB');
+
+  const totalSection =
+    '<tr><td colspan="3" class="py-1"><hr class="border-slate-100"></td></tr>'
+    + tRow('Total usable cash', Math.round(thNetSGD), Math.round(thNetSGD/12), 'text-emerald-700 font-bold');
+
+  $('thTable').innerHTML =
+    tRow('Pokee invoice revenue', Math.round(thInvY), thInvM)
+    + salarySection
+    + companySection
+    + totalSection;
 
   updateCharts(pokeeSG, thInvY, savings, sgNetRent, thNetSGD);
 }
@@ -492,12 +602,23 @@ function updateCharts(sg, th, sav, sgNet, thNet) {
 // ═══════════════════════════════════════════════════
 function $(id) { return document.getElementById(id); }
 function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
-function tRow(label, annual, monthly, cls='') {
+function tRow(label, annual, monthly, cls='', thbNote='') {
   return `<tr>
     <td class="py-0.5 text-slate-500">${label}</td>
     <td class="py-0.5 text-right tabular-nums ${cls}">${typeof annual==='number'?fmt(annual):annual}</td>
     <td class="py-0.5 text-right tabular-nums text-slate-400 text-xs">${monthly!==''&&typeof monthly==='number'?fmt(monthly)+'/mo':monthly||''}</td>
+    ${thbNote ? '<td class="py-0.5 text-right tabular-nums text-slate-300 text-xs pl-2">'+thbNote+'</td>' : ''}
   </tr>`;
+}
+function tRowSub(bandLabel, rate, tax) {
+  return `<tr>
+    <td class="py-0 pl-3 text-xs text-slate-400">${bandLabel} @ ${rate}</td>
+    <td class="py-0 text-right tabular-nums text-xs text-slate-400">${fmt(tax)}</td>
+    <td></td>
+  </tr>`;
+}
+function tSectionLabel(text) {
+  return `<tr><td colspan="3" class="pt-2 pb-0.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">${text}</td></tr>`;
 }
 
 // ═══════════════════════════════════════════════════
