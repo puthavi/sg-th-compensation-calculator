@@ -627,7 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ['sgSalary','sgRent','fxRate','thAdmin','thInvoice'].forEach(id =>
     $(id).addEventListener('input', calc)
   );
-  calc();
+  requestAnimationFrame(() => calc());
 });
 </script>
 </body>
