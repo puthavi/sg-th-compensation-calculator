@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SG vs TH Compensation Calculator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  body { font-family: 'Inter', sans-serif; }
+  input[type=range] { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 4px; outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 3px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+  .slider-sg::-webkit-slider-thumb { background: #6366f1; }
+  .slider-th::-webkit-slider-thumb { background: #10b981; }
+  .slider-sg { background: linear-gradient(to right, #c7d2fe, #6366f1); }
+  .slider-th { background: linear-gradient(to right, #a7f3d0, #10b981); }
+  .card { background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04); }
+  .glow-green { box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+  .glow-blue { box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+  .tag { display: inline-block; font-size: 0.65rem; font-weight: 600; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pulse { animation: pulse-green 2s infinite; }
+  @keyframes pulse-green { 0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.3); } 50% { box-shadow: 0 0 0 8px rgba(16,185,129,0); } }
+  .fade-in { animation: fadeIn 0.4s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .floor-marker { position: relative; }
+  .floor-marker::after { content: 'Floor'; position: absolute; top: -18px; font-size: 0.6rem; font-weight: 600; color: #ef4444; background: #fef2f2; padding: 1px 5px; border-radius: 4px; white-space: nowrap; }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- Header -->
+<div class="bg-gradient-to-r from-indigo-600 via-indigo-500 to-emerald-500 text-white">
+  <div class="max-w-6xl mx-auto px-4 py-8 sm:py-12">
+    <h1 class="text-2xl sm:text-4xl font-bold tracking-tight">Compensation Structure Calculator</h1>
+    <p class="mt-2 text-indigo-100 text-sm sm:text-lg max-w-2xl">Singapore Employment vs Thailand Company — an interactive model showing why the Thailand structure is a <strong class="text-white">win-win</strong> for both sides.</p>
+  </div>
+</div>
+
+<div class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+
+<!-- ═══ INPUTS ═══ -->
+<div class="card p-5 fade-in">
+  <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+    Adjust Assumptions
+  </h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div>
+      <label class="block text-xs font-medium text-gray-500 mb-1">SG Monthly Salary (SGD)</label>
+      <input id="sgSalary" type="number" value="7000" min="1000" max="30000" step="100"
+        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none" />
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-gray-500 mb-1">SG Monthly Rent (SGD)</label>
+      <input id="sgRent" type="number" value="2500" min="0" max="10000" step="100"
+        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none" />
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-gray-500 mb-1">Exchange Rate (1 SGD = THB)</label>
+      <input id="fxRate" type="number" value="25.3878" min="20" max="35" step="0.01"
+        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none" />
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-gray-500 mb-1">TH Admin Cost (THB/yr)</label>
+      <input id="thAdmin" type="number" value="50000" min="0" max="500000" step="5000"
+        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 outline-none" />
+    </div>
+  </div>
+</div>
+
+<!-- ═══ THE BIG SLIDER ═══ -->
+<div class="card p-5 fade-in">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
+    <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+      <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+      Thailand Monthly Invoice to Pokee
+    </h2>
+    <div class="flex items-baseline gap-1 mt-1 sm:mt-0">
+      <span class="text-3xl font-bold text-emerald-600" id="thInvoiceDisplay">5,500</span>
+      <span class="text-sm text-gray-400">SGD/mo</span>
+    </div>
+  </div>
+
+  <div class="relative mt-3 mb-2 px-1">
+    <input id="thInvoice" type="range" min="3000" max="8000" step="50" value="5500"
+      class="w-full slider-th cursor-pointer" />
+    <!-- Markers -->
+    <div class="flex justify-between text-[10px] text-gray-400 mt-1 select-none" id="sliderMarkers">
+    </div>
+  </div>
+  <div class="flex flex-wrap gap-2 mt-2">
+    <button onclick="setInvoice(4500)" class="text-xs px-3 py-1 rounded-full border border-gray-200 hover:bg-gray-50 text-gray-600 transition">Current: 4,500</button>
+    <button onclick="setInvoice(5000)" class="text-xs px-3 py-1 rounded-full border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 transition font-medium">Floor: 5,000</button>
+    <button onclick="setInvoice(5500)" class="text-xs px-3 py-1 rounded-full border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition font-medium">Proposal: 5,500</button>
+    <button onclick="setInvoice(7000)" class="text-xs px-3 py-1 rounded-full border border-gray-200 hover:bg-gray-50 text-gray-600 transition">Match SG: 7,000</button>
+  </div>
+</div>
+
+<!-- ═══ RESULTS GRID ═══ -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  <!-- LEFT: Company Cost -->
+  <div class="card p-5 fade-in">
+    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Pokee AI's Annual Cost</h3>
+    <div class="space-y-3">
+      <div class="flex justify-between items-center">
+        <div><span class="tag bg-indigo-100 text-indigo-700">Singapore</span><span class="ml-2 text-sm text-gray-600">Employment</span></div>
+        <span class="text-lg font-bold text-indigo-600" id="pokeeSG">—</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <div><span class="tag bg-emerald-100 text-emerald-700">Thailand</span><span class="ml-2 text-sm text-gray-600">Company Invoice</span></div>
+        <span class="text-lg font-bold text-emerald-600" id="pokeeTH">—</span>
+      </div>
+      <hr class="border-gray-100">
+      <div class="flex justify-between items-center">
+        <span class="text-sm font-medium text-gray-700">Pokee saves</span>
+        <span class="text-xl font-bold text-blue-600" id="pokeeSavings">—</span>
+      </div>
+      <div class="bg-blue-50 rounded-xl px-4 py-3 text-center">
+        <span class="text-xs text-blue-500 font-medium">SAVINGS RATE</span>
+        <div class="text-2xl font-bold text-blue-700" id="savingsPct">—</div>
+      </div>
+    </div>
+    <div class="mt-4" style="height:200px">
+      <canvas id="costChart"></canvas>
+    </div>
+  </div>
+
+  <!-- RIGHT: Your Take-Home -->
+  <div class="card p-5 fade-in">
+    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Your Annual Usable Cash</h3>
+    <div class="space-y-3">
+      <div class="flex justify-between items-center">
+        <div><span class="tag bg-indigo-100 text-indigo-700">Singapore</span><span class="ml-2 text-sm text-gray-600">After tax & rent</span></div>
+        <span class="text-lg font-bold text-indigo-600" id="yourSG">—</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <div><span class="tag bg-emerald-100 text-emerald-700">Thailand</span><span class="ml-2 text-sm text-gray-600">After tax, no rent</span></div>
+        <span class="text-lg font-bold text-emerald-600" id="yourTH">—</span>
+      </div>
+      <hr class="border-gray-100">
+      <div class="flex justify-between items-center">
+        <span class="text-sm font-medium text-gray-700">You gain / lose</span>
+        <span class="text-xl font-bold" id="yourDiff">—</span>
+      </div>
+      <div id="yourVerdict" class="rounded-xl px-4 py-3 text-center">
+      </div>
+    </div>
+    <div class="mt-4" style="height:200px">
+      <canvas id="netChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DETAILED BREAKDOWN ═══ -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  <!-- SG Breakdown -->
+  <div class="card p-5 fade-in">
+    <h3 class="text-sm font-semibold text-indigo-600 uppercase tracking-wide mb-3">Singapore Breakdown</h3>
+    <table class="w-full text-sm">
+      <tbody id="sgTable"></tbody>
+    </table>
+  </div>
+
+  <!-- TH Breakdown -->
+  <div class="card p-5 fade-in">
+    <h3 class="text-sm font-semibold text-emerald-600 uppercase tracking-wide mb-3">Thailand Breakdown (Salary-Heavy)</h3>
+    <table class="w-full text-sm">
+      <tbody id="thTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ WIN-WIN BANNER ═══ -->
+<div id="winwinBanner" class="card p-6 bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 fade-in">
+  <div class="flex items-start gap-3">
+    <div class="text-3xl">🤝</div>
+    <div>
+      <h3 class="text-lg font-bold text-gray-800">The Win-Win</h3>
+      <p class="text-gray-600 mt-1" id="winwinText">—</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CAVEATS ═══ -->
+<div class="card p-5 fade-in">
+  <h3 class="text-sm font-semibold text-amber-600 uppercase tracking-wide mb-3 flex items-center gap-2">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    Important Notes
+  </h3>
+  <ul class="text-xs text-gray-500 space-y-1 list-disc list-inside">
+    <li>Singapore: Tax resident rates (≥183 days). EP holder — no CPF. Earned Income Relief of 1,000 SGD (under 55).</li>
+    <li>Thailand: Salary-heavy model (maximise salary, minimal company profit). SME CIT rates apply (0% on first 300k THB profit).</li>
+    <li>Thai personal deductions: 100k employment deduction (cap) + 60k personal allowance + 9k social security. Single, no dependents assumed.</li>
+    <li>Social security capped at 750 THB/month per party. Admin costs are estimates. VAT not modeled (revenue likely below 1.8M THB threshold).</li>
+    <li>Exchange rate fluctuations, dividend formalities, and transfer pricing rules should be reviewed with a qualified accountant.</li>
+    <li>Tax rates sourced from <a href="https://taxsummaries.pwc.com" target="_blank" class="text-blue-500 underline">PwC Tax Summaries</a> (SG & TH) and <a href="https://www.iras.gov.sg" target="_blank" class="text-blue-500 underline">IRAS</a>.</li>
+  </ul>
+</div>
+
+<footer class="text-center text-xs text-gray-300 py-6">Built for negotiation purposes only. Not tax advice.</footer>
+
+</div><!-- /container -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// TAX ENGINES
+// ═══════════════════════════════════════════════════
+
+function sgPIT(chargeable) {
+  const brackets = [
+    [20000,.00],[10000,.02],[10000,.035],[40000,.07],
+    [40000,.115],[40000,.15],[40000,.18],[40000,.19],
+    [40000,.195],[40000,.20],[180000,.22],[500000,.23],
+    [Infinity,.24]
+  ];
+  let rem = Math.max(chargeable, 0), tax = 0;
+  for (const [w, r] of brackets) {
+    const t = Math.min(rem, w); tax += t * r; rem -= t;
+    if (rem <= 0) break;
+  }
+  return Math.round(tax * 100) / 100;
+}
+
+function thPIT(taxable) {
+  const brackets = [
+    [150000,.00],[150000,.05],[200000,.10],[250000,.15],
+    [250000,.20],[1000000,.25],[3000000,.30],[Infinity,.35]
+  ];
+  let rem = Math.max(taxable, 0), tax = 0;
+  for (const [w, r] of brackets) {
+    const t = Math.min(rem, w); tax += t * r; rem -= t;
+    if (rem <= 0) break;
+  }
+  return Math.round(tax * 100) / 100;
+}
+
+function thCIT(profit) {
+  if (profit <= 0) return 0;
+  if (profit <= 300000) return 0;
+  if (profit <= 3000000) return (profit - 300000) * 0.15;
+  return 2700000 * 0.15 + (profit - 3000000) * 0.20;
+}
+
+// ═══════════════════════════════════════════════════
+// MAIN CALCULATION
+// ═══════════════════════════════════════════════════
+
+function calc() {
+  const sgSalM = +$('sgSalary').value;
+  const sgRentM = +$('sgRent').value;
+  const fx = +$('fxRate').value;
+  const thAdm = +$('thAdmin').value;
+  const thInvM_SGD = +$('thInvoice').value;
+
+  const sgSalY = sgSalM * 12;
+  const sgRentY = sgRentM * 12;
+  const sgEIR = 1000;
+  const sgChargeable = sgSalY - sgEIR;
+  const sgTax = sgPIT(sgChargeable);
+  const sgNetTax = sgSalY - sgTax;
+  const sgNetRent = sgNetTax - sgRentY;
+  const sgSDL = Math.min(Math.min(sgSalM, 4500) * 0.0025, 11.25) * 12;
+  // if salary < 50 no SDL, else min $2
+  const sgSDLfinal = sgSalM < 50 ? 0 : Math.max(sgSDL, 24);
+  const pokeeSG = sgSalY + sgSDLfinal;
+
+  // Thailand
+  const thInvY_SGD = thInvM_SGD * 12;
+  const thInvY_THB = thInvY_SGD * fx;
+  const thSSm = 750;
+  const thSSy = thSSm * 12; // per party
+  // Salary-heavy: maximize salary
+  const maxSal = thInvY_THB - thAdm - thSSy;
+  const salM = Math.floor(Math.max(maxSal, 0) / 12 / 1000) * 1000;
+  const salY = salM * 12;
+
+  // Company
+  const profit = thInvY_THB - salY - thSSy - thAdm;
+  const cit = thCIT(Math.max(profit, 0));
+  const profitAT = Math.max(profit - cit, 0);
+  const divWHT = profitAT * 0.10;
+  const divNet = profitAT - divWHT;
+
+  // Personal
+  const empDed = Math.min(salY * 0.5, 100000);
+  const persAllow = 60000;
+  const taxable = Math.max(salY - empDed - persAllow - thSSy, 0);
+  const thTax = thPIT(taxable);
+  const salNet = salY - thTax - thSSy;
+  const totalNet = salNet + divNet;
+  const totalNetSGD = totalNet / fx;
+
+  const pokeeTH = thInvY_SGD;
+  const savings = pokeeSG - pokeeTH;
+  const savPct = pokeeSG > 0 ? (savings / pokeeSG * 100) : 0;
+  const diff = totalNetSGD - sgNetRent;
+
+  // ─── UPDATE DOM ───
+  $('thInvoiceDisplay').textContent = fmt(thInvM_SGD);
+  $('pokeeSG').textContent = fmt(pokeeSG) + ' SGD';
+  $('pokeeTH').textContent = fmt(pokeeTH) + ' SGD';
+  $('pokeeSavings').textContent = (savings >= 0 ? '+' : '') + fmt(savings) + ' SGD/yr';
+  $('savingsPct').textContent = savPct.toFixed(1) + '%';
+  $('yourSG').textContent = fmt(sgNetRent) + ' SGD';
+  $('yourTH').textContent = fmt(Math.round(totalNetSGD)) + ' SGD';
+
+  const diffEl = $('yourDiff');
+  diffEl.textContent = (diff >= 0 ? '+' : '') + fmt(Math.round(diff)) + ' SGD/yr';
+  diffEl.className = 'text-xl font-bold ' + (diff >= 0 ? 'text-emerald-600' : 'text-red-500');
+
+  const vEl = $('yourVerdict');
+  if (diff >= 0) {
+    vEl.className = 'rounded-xl px-4 py-3 text-center bg-emerald-50';
+    vEl.innerHTML = `<span class="text-xs text-emerald-500 font-medium">YOU COME OUT AHEAD BY</span><div class="text-2xl font-bold text-emerald-700">${fmt(Math.round(diff))} SGD/yr</div><div class="text-xs text-emerald-400">${fmt(Math.round(diff/12))} SGD/mo</div>`;
+  } else {
+    vEl.className = 'rounded-xl px-4 py-3 text-center bg-red-50';
+    vEl.innerHTML = `<span class="text-xs text-red-500 font-medium">GAP VS SINGAPORE</span><div class="text-2xl font-bold text-red-600">${fmt(Math.round(Math.abs(diff)))} SGD/yr</div><div class="text-xs text-red-400">${fmt(Math.round(Math.abs(diff)/12))} SGD/mo less</div>`;
+  }
+
+  // Win-win text
+  $('winwinText').innerHTML = savings > 0
+    ? `At <strong>${fmt(thInvM_SGD)} SGD/month</strong>, Pokee saves <strong class="text-blue-600">${fmt(Math.round(savings))} SGD/year (${savPct.toFixed(0)}%)</strong> compared to Singapore employment. `
+      + (diff >= 0
+        ? `Meanwhile, you take home <strong class="text-emerald-600">${fmt(Math.round(diff))} SGD/year more</strong> than in SG (after rent). Both sides win.`
+        : `To match your SG take-home, the invoice only needs to increase by <strong>${fmt(Math.round(Math.abs(diff)/12))}</strong> SGD/month — Pokee would still save substantially.`)
+    : `At this invoice level, Pokee no longer saves vs Singapore. Consider a lower amount.`;
+
+  // SG table
+  $('sgTable').innerHTML = tRow('Gross salary', sgSalY, sgSalM)
+    + tRow('Earned Income Relief', -sgEIR, '', 'text-red-500')
+    + tRow('Chargeable income', sgChargeable, '', 'font-semibold')
+    + tRow('Income tax', -sgTax, -Math.round(sgTax/12), 'text-red-500 font-semibold')
+    + `<tr><td colspan="3" class="py-1"><hr class="border-gray-100"></td></tr>`
+    + tRow('Net after tax', sgNetTax, Math.round(sgNetTax/12), 'text-emerald-600')
+    + tRow('Rent', -sgRentY, -sgRentM, 'text-red-500')
+    + tRow('Usable cash', sgNetRent, Math.round(sgNetRent/12), 'text-emerald-700 font-bold')
+    + `<tr><td colspan="3" class="py-1"><hr class="border-gray-100"></td></tr>`
+    + tRow('Employer SDL', sgSDLfinal, Math.round(sgSDLfinal/12), 'text-gray-400 text-xs')
+    + tRow('Total Pokee cost', pokeeSG, Math.round(pokeeSG/12), 'text-indigo-600 font-semibold');
+
+  // TH table
+  const thSalSGD = salY / fx;
+  $('thTable').innerHTML = tRow('Company revenue', thInvY_SGD, thInvM_SGD)
+    + tRow(`Salary (${fmt(salM)} THB/mo)`, Math.round(thSalSGD), Math.round(thSalSGD/12))
+    + tRow('Employer SS', -Math.round(thSSy/fx), '', 'text-red-500 text-xs')
+    + tRow('Admin costs', -Math.round(thAdm/fx), '', 'text-red-500 text-xs')
+    + tRow('Company profit', Math.round(profit/fx), '', profit > 0 ? '' : 'text-gray-400')
+    + tRow('CIT', -Math.round(cit/fx), '', 'text-red-500 text-xs')
+    + tRow('Dividend WHT (10%)', -Math.round(divWHT/fx), '', 'text-red-500 text-xs')
+    + `<tr><td colspan="3" class="py-1"><hr class="border-gray-100"></td></tr>`
+    + tRow('Your PIT on salary', -Math.round(thTax/fx), '', 'text-red-500 font-semibold')
+    + tRow('Employee SS', -Math.round(thSSy/fx), '', 'text-red-500 text-xs')
+    + tRow('Net salary', Math.round(salNet/fx), '', 'text-emerald-600')
+    + tRow('Net dividend', Math.round(divNet/fx), '', 'text-emerald-600')
+    + tRow('Total usable cash', Math.round(totalNetSGD), Math.round(totalNetSGD/12), 'text-emerald-700 font-bold')
+    + `<tr><td colspan="3" class="py-1"><hr class="border-gray-100"></td></tr>`
+    + tRow('Total Pokee cost', pokeeTH, Math.round(pokeeTH/12), 'text-emerald-600 font-semibold');
+
+  // Charts
+  updateCharts(pokeeSG, pokeeTH, sgNetRent, totalNetSGD);
+}
+
+// ═══════════════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════════════
+
+let costChart, netChart;
+
+function initCharts() {
+  const commonOpts = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { callback: v => (v/1000).toFixed(0)+'k' } },
+      x: { grid: { display: false } }
+    }
+  };
+
+  costChart = new Chart($('costChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Singapore', 'Thailand'],
+      datasets: [{
+        data: [0, 0],
+        backgroundColor: ['rgba(99,102,241,0.7)', 'rgba(16,185,129,0.7)'],
+        borderRadius: 8, barPercentage: 0.5
+      }]
+    },
+    options: { ...commonOpts, plugins: { ...commonOpts.plugins, title: { display: true, text: 'Pokee Cost (SGD/yr)', font: { size: 11, weight: '500' }, color: '#888' } } }
+  });
+
+  netChart = new Chart($('netChart'), {
+    type: 'bar',
+    data: {
+      labels: ['SG (after rent)', 'TH (no rent)'],
+      datasets: [{
+        data: [0, 0],
+        backgroundColor: ['rgba(99,102,241,0.7)', 'rgba(16,185,129,0.7)'],
+        borderRadius: 8, barPercentage: 0.5
+      }]
+    },
+    options: { ...commonOpts, plugins: { ...commonOpts.plugins, title: { display: true, text: 'Your Usable Cash (SGD/yr)', font: { size: 11, weight: '500' }, color: '#888' } } }
+  });
+}
+
+function updateCharts(pSG, pTH, ySG, yTH) {
+  costChart.data.datasets[0].data = [Math.round(pSG), Math.round(pTH)];
+  costChart.update('none');
+  netChart.data.datasets[0].data = [Math.round(ySG), Math.round(yTH)];
+  netChart.update('none');
+}
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+
+function $(id) { return document.getElementById(id); }
+function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
+function tRow(label, annual, monthly, cls='') {
+  const c = cls ? ` class="${cls}"` : '';
+  return `<tr><td class="py-1 text-gray-600">${label}</td><td class="py-1 text-right tabular-nums${cls?' '+cls:''}">${typeof annual==='number'?fmt(annual):annual}</td><td class="py-1 text-right tabular-nums text-gray-400 text-xs">${monthly!==''&&typeof monthly==='number'?fmt(monthly)+'/mo':monthly||''}</td></tr>`;
+}
+function setInvoice(v) { $('thInvoice').value = v; calc(); }
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  initCharts();
+  // Bind all inputs
+  ['sgSalary','sgRent','fxRate','thAdmin','thInvoice'].forEach(id => {
+    $(id).addEventListener('input', calc);
+  });
+  calc();
+});
+</script>
+</body>
+</html>
