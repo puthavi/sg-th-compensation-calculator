@@ -65,11 +65,11 @@
       <p class="text-xs text-slate-400 mt-0.5">Adjust the monthly invoice amount to model different cost scenarios</p>
     </div>
     <div class="flex items-baseline gap-1.5 mt-2 sm:mt-0">
-      <span class="text-3xl font-bold text-blue-600 tabular-nums" id="thInvoiceDisplay">5,500</span>
+      <span class="text-3xl font-bold text-blue-600 tabular-nums" id="thInvoiceDisplay">4,500</span>
       <span class="text-sm text-slate-400">SGD / mo</span>
     </div>
   </div>
-  <input id="thInvoice" type="range" min="3000" max="8000" step="50" value="5500" class="w-full cursor-pointer" />
+  <input id="thInvoice" type="range" min="3000" max="8000" step="50" value="4500" class="w-full cursor-pointer" />
   <div class="flex justify-between text-[10px] text-slate-300 mt-1 select-none px-0.5">
     <span>3,000</span><span>4,000</span><span>5,000</span><span>6,000</span><span>7,000</span><span>8,000</span>
   </div>
@@ -196,7 +196,7 @@
     <!-- TH side -->
     <div class="border border-blue-100 rounded-xl p-4 bg-blue-50/30">
       <p class="text-xs font-semibold text-blue-400 uppercase mb-1" id="thPanelTitle">Thailand — Salary-Heavy (B1)</p>
-      <p class="text-xs text-blue-300 mb-3" id="thPlanDesc">Maximize personal salary — nearly all company revenue is paid out as salary, leaving minimal profit. Small remaining profit (if any) is distributed as dividends after CIT.</p>
+      <p class="text-xs text-blue-300 mb-3" id="thPlanDesc">Full salary — all invoice revenue is paid as salary. The company covers employer social security and admin as overhead. No profit distribution or dividends.</p>
       <table class="w-full text-sm"><tbody id="thTable"></tbody></table>
     </div>
   </div>
@@ -226,13 +226,13 @@
       </div>
       <div>
         <label class="block text-xs font-medium text-slate-400 mb-1">TH Admin Cost (THB/yr)</label>
-        <input id="thAdmin" type="number" value="50000" min="0" max="500000" step="5000"
+        <input id="thAdmin" type="number" value="20000" min="0" max="500000" step="5000"
           class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-300 outline-none" />
       </div>
     </div>
     <div class="mt-4 text-xs text-slate-400 space-y-1">
       <p><strong>SG:</strong> Tax resident (≥183 days). EP holder — no CPF, no FWL. Earned Income Relief 1,000 SGD (under 55).</p>
-      <p><strong>TH (B1):</strong> Salary-heavy — maximize salary, minimal company profit. SME CIT (0% on first 300k THB profit).</p>
+      <p><strong>TH (B1):</strong> Full salary — all invoice revenue paid as salary. Company absorbs employer SS + admin as overhead.</p>
       <p><strong>TH (B2):</strong> Balanced — moderate salary (50k THB/mo) + dividends from company profits. CIT 15% on 300k–3M THB. Dividend WHT 10% (final).</p>
       <p><strong>Deductions:</strong> Employment income deduction 100k THB (cap), personal allowance 60k THB, SS 10.5k THB/yr (875/mo, 2026 cap at 17,500 THB/mo wage ceiling). Single, no dependents.</p>
       <p><strong>SG Tax Rebate:</strong> YA 2026 — 60% of tax payable, capped at SGD 200 (IRAS).</p>
@@ -342,9 +342,8 @@ function calcTHNet(invM, fx, thAdm, model) {
   const eeSS = TH_SS_MAX_YEARLY; // employee SS (deducted from salary)
   let salY;
   if (model === 'B1') {
-    // Max salary: revenue minus employer SS and admin (company expenses)
-    const maxSal = invY_THB - thAdm - erSS;
-    salY = Math.floor(Math.max(maxSal, 0) / 12 / 1000) * 1000 * 12;
+    // Full salary: entire invoice revenue paid as salary
+    salY = invY_THB;
   } else {
     salY = 50000 * 12;
   }
@@ -381,7 +380,7 @@ function setModel(m) {
   document.getElementById('tabB2').className = 'pb-1 cursor-pointer transition ' + (m==='B2'?'tab-active':'tab-inactive');
   document.getElementById('thPanelTitle').textContent = m==='B1' ? 'Thailand — Salary-Heavy (B1)' : 'Thailand — Salary + Dividend (B2)';
   document.getElementById('thPlanDesc').textContent = m==='B1'
-    ? 'Maximize personal salary — nearly all company revenue is paid out as salary, leaving minimal profit. Small remaining profit (if any) is distributed as dividends after CIT.'
+    ? 'Full salary — all invoice revenue is paid as salary. The company covers employer social security and admin as overhead. No profit distribution or dividends.'
     : 'Moderate fixed salary (50,000 THB/mo) with the remaining company profit distributed as dividends. CIT applies to profit (SME rates), then 10% withholding tax on dividends (final tax).';
   calc();
 }
@@ -416,7 +415,7 @@ function calc() {
   // TH calc (depends on model)
   let thNetSGD, thDetails;
   const salM_B = currentModel === 'B1'
-    ? Math.floor(Math.max(thInvY_THB - thAdm - erSS, 0) / 12 / 1000) * 1000
+    ? Math.round(thInvY_THB / 12)
     : 50000;
   const salY = salM_B * 12;
   // Company P&L: revenue - salary - employer SS - admin
